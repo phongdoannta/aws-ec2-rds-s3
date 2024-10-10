@@ -1,0 +1,37 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - feature/ci_cd
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: Install dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/feature/ci_cd' # Chỉ triển khai khi có thay đổi trên nhánh feature/ci_cd
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: SSH to EC2 and deploy
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }} # Lấy khóa SSH từ secrets
+        run: |
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > private_key
+          chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key ec2-user@52.77.88.113 "cd /var/www/demo-app-lrv && sudo git pull origin feature/ci_cd && sudo php artisan migrate --force && sudo php artisan cache:clear"
