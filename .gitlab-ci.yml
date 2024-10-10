@@ -33,10 +33,11 @@ build-job:       # This job runs in the build stage, which runs first.
 deploy-job:      # This job runs in the deploy stage.
   stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
   only:
-    - feature/auth_breeze
+    # - feature/auth_breeze
+    - feature/ci_cd
   script:
     - echo "Deploying application..."
     - eval $(ssh-agent -s) # Khởi động SSH agent
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - # Thêm khóa SSH vào agent
-    - ssh -o StrictHostKeyChecking=no ec2-user@52.77.88.113 "cd $DEPLOY_DIR && git pull origin feature/auth_breeze && php artisan migrate --force && php artisan cache:clear"
+    - ssh -o StrictHostKeyChecking=no ec2-user@52.77.88.113 "cd $DEPLOY_DIR && git pull origin feature/ci_cd && php artisan migrate --force && php artisan cache:clear"
     - echo "Application successfully deployed."
